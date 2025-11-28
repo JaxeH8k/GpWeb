@@ -1,84 +1,84 @@
 [
-    {
-        "Id": "199806af-d108-4884-8cd2-de426310c85",
-        "DisplayName": "GPO Lock Settings",
-        "Path": "cn={199806af-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
-        "Owner": "Contoso\\Madmin",
-        "domainName": "Contoso.com",
-        "CreationTime": "2023-05-12T18:38:28Z",
-        "ModificationTime" : "23-05-12T18:38:28Z",
-        "User": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "Computer": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "GpoStatus": 3,
-        "WmiFilter": {
-            "Description": "This Will apply to WQindows 10 Systems",
-            "Name": "ndows 10",
-            "Path": "MSFT_SomFilter.ID=\"{32823fD9-C380-4182-1358-FD93608DFD3F}\",Domain=\"Contoso.com\""
-        },
-        "Description": "A gpo for admin and stuff"
+  {
+    "Id": "199806af-d108-4884-8cd2-de426310c85",
+    "DisplayName": "GPO Lock Settings",
+    "Path": "cn={199806af-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
+    "Owner": "Contoso\\Madmin",
+    "domainName": "Contoso.com",
+    "CreationTime": "2023-05-12T18:38:28Z",
+    "ModificationTime": "23-05-12T18:38:28Z",
+    "User": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
     },
-        {
-        "Id": "199806dc-d108-4884-8cd2-de426310c85",
-        "DisplayName": "GPO Disable SMB1",
-        "Path": "cn={199806dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
-        "Owner": "Contoso\\Madmin",
-        "domainName": "Contoso.com",
-        "CreationTime": "2023-05-12T18:38:28Z",
-        "ModificationTime" : "2023-05-12T18:38:28Z",
-        "User": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "Computer": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "GpoStatus": 3,
-        "WmiFilter": null,
-        "Description": "A gpo for admin and stuff"
+    "Computer": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
     },
-        {
-        "Id": "199804dc-d108-4884-8cd2-de426310c85",
-        "DisplayName": "GPO Legal Disclaimer",
-        "Path": "cn={199804dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
-        "Owner": "Contoso\\Madmin",
-        "domainName": "Contoso.com",
-        "CreationTime": "2023-05-12T18:38:28Z",
-        "ModificationTime" : "2023-05-12T18:38:28Z",
-        "User": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "Computer": {
-            "Policy": {},
-            "Preference": {},
-            "DSVersion": 1,
-            "SysvolVersion": 1,
-            "Enabled": true
-        },
-        "GpoStatus": 3,
-        "WmiFilter": null,
-        "Description": "A gpo for admin and stuff"
-    }
+    "GpoStatus": 3,
+    "WmiFilter": {
+      "Description": "This Will apply to WQindows 10 Systems",
+      "Name": "ndows 10",
+      "Path": "MSFT_SomFilter.ID=\"{32823fD9-C380-4182-1358-FD93608DFD3F}\",Domain=\"Contoso.com\""
+    },
+    "Description": "A gpo for admin and stuff"
+  },
+  {
+    "Id": "199806dc-d108-4884-8cd2-de426310c85",
+    "DisplayName": "GPO Disable SMB1",
+    "Path": "cn={199806dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
+    "Owner": "Contoso\\Madmin",
+    "domainName": "Contoso.com",
+    "CreationTime": "2023-05-12T18:38:28Z",
+    "ModificationTime": "2023-05-12T18:38:28Z",
+    "User": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
+    },
+    "Computer": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
+    },
+    "GpoStatus": 3,
+    "WmiFilter": null,
+    "Description": "A gpo for admin and stuff"
+  },
+  {
+    "Id": "199804dc-d108-4884-8cd2-de426310c85",
+    "DisplayName": "GPO Legal Disclaimer",
+    "Path": "cn={199804dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com},cn=policies,cn=system,dc=contoso,dc=com",
+    "Owner": "Contoso\\Madmin",
+    "domainName": "Contoso.com",
+    "CreationTime": "2023-05-12T18:38:28Z",
+    "ModificationTime": "2023-05-12T18:38:28Z",
+    "User": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
+    },
+    "Computer": {
+      "Policy": {},
+      "Preference": {},
+      "DSVersion": 1,
+      "SysvolVersion": 1,
+      "Enabled": true
+    },
+    "GpoStatus": 3,
+    "WmiFilter": null,
+    "Description": "A gpo for admin and stuff"
+  }
 ]
