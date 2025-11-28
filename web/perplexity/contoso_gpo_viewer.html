@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoso GPO Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .welcome {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .upload-box {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .upload-box:hover {
+            border-color: #764ba2;
+            background: #f8f9fa;
+        }
+
+        .upload-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .status {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #28a745;
+        }
+
+        .tree-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .tree-container.visible {
+            display: block;
+        }
+
+        .ou-item {
+            margin: 5px 0;
+        }
+
+        .ou-header {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .ou-header:hover {
+            background: #f0f0f0;
+        }
+
+        .expand-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 8px;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .expand-btn.collapsed {
+            background: #28a745;
+            color: white;
+        }
+
+        .expand-btn.expanded {
+            background: #dc3545;
+            color: white;
+        }
+
+        .expand-btn:disabled {
+            background: #e0e0e0;
+            cursor: default;
+            visibility: hidden;
+        }
+
+        .ou-name {
+            font-weight: 600;
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .gpo-count {
+            color: #666;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .ou-children {
+            margin-left: 32px;
+            display: none;
+        }
+
+        .ou-children.visible {
+            display: block;
+        }
+
+        .gpo-item {
+            padding: 8px 8px 8px 32px;
+            margin: 2px 0;
+            background: #f8f9fa;
+            border-left: 3px solid #667eea;
+            border-radius: 3px;
+        }
+
+        .gpo-name {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .gpo-name.has-wmi {
+            font-style: italic;
+        }
+
+        .wmi-details {
+            margin-top: 5px;
+            margin-left: 15px;
+            font-size: 0.85em;
+            color: #6c757d;
+            line-height: 1.4;
+        }
+
+        .wmi-name {
+            font-weight: 600;
+            color: #764ba2;
+        }
+
+        .wmi-query {
+            font-family: 'Courier New', monospace;
+            background: #e9ecef;
+            padding: 3px 6px;
+            border-radius: 3px;
+            margin-top: 3px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏢 Contoso Group Policy Management</h1>
+        <p class="welcome">Welcome to the enhanced GPO viewer. Upload your JSON files to explore your Active Directory Group Policy infrastructure with improved performance.</p>
+
+        <div class="upload-section">
+            <div class="upload-box">
+                <h3>📁 OU JSON</h3>
+                <input type="file" id="ouFile" class="file-input" accept=".json">
+                <button class="upload-btn" onclick="document.getElementById('ouFile').click()">Select File</button>
+                <div class="status" id="ouStatus"></div>
+            </div>
+
+            <div class="upload-box">
+                <h3>📋 GPO JSON</h3>
+                <input type="file" id="gpoFile" class="file-input" accept=".json">
+                <button class="upload-btn" onclick="document.getElementById('gpoFile').click()">Select File</button>
+                <div class="status" id="gpoStatus"></div>
+            </div>
+
+            <div class="upload-box">
+                <h3>🔍 WMI JSON</h3>
+                <input type="file" id="wmiFile" class="file-input" accept=".json">
+                <button class="upload-btn" onclick="document.getElementById('wmiFile').click()">Select File</button>
+                <div class="status" id="wmiStatus"></div>
+            </div>
+        </div>
+
+        <div class="tree-container" id="treeContainer">
+            <h2>Organizational Unit Hierarchy</h2>
+            <div id="ouTree"></div>
+        </div>
+    </div>
+
+    <script>
+        let ouData = null;
+        let gpoData = null;
+        let wmiData = null;
+
+        // File upload handlers
+        document.getElementById('ouFile').addEventListener('change', (e) => handleFileUpload(e, 'ou'));
+        document.getElementById('gpoFile').addEventListener('change', (e) => handleFileUpload(e, 'gpo'));
+        document.getElementById('wmiFile').addEventListener('change', (e) => handleFileUpload(e, 'wmi'));
+
+        function handleFileUpload(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    switch(type) {
+                        case 'ou':
+                            ouData = data;
+                            document.getElementById('ouStatus').textContent = `✓ ${file.name} loaded`;
+                            break;
+                        case 'gpo':
+                            gpoData = data;
+                            document.getElementById('gpoStatus').textContent = `✓ ${file.name} loaded`;
+                            break;
+                        case 'wmi':
+                            wmiData = data;
+                            document.getElementById('wmiStatus').textContent = `✓ ${file.name} loaded`;
+                            break;
+                    }
+
+                    if (ouData && gpoData && wmiData) {
+                        renderOUTree();
+                    }
+                } catch (error) {
+                    alert(`Error parsing ${file.name}: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function extractGuidFromPath(path) {
+            // Extract GUID from CN={GUID},CN=Policies... format
+            const match = path.match(/\{([^}]+)\}/);
+            return match ? match[1] : null;
+        }
+
+        function findGPO(guid) {
+            return gpoData.find(gpo => gpo.Id === guid);
+        }
+
+        function findWMI(guid) {
+            // WMI GUID might have or not have braces
+            const guidWithBraces = guid.startsWith('{') ? guid : `{${guid}}`;
+            const guidWithoutBraces = guid.replace(/[{}]/g, '');
+
+            return wmiData.find(wmi => 
+                wmi['msWMI-ID'] === guidWithBraces || 
+                wmi['msWMI-ID'] === guidWithoutBraces ||
+                wmi['msWMI-ID'].replace(/[{}]/g, '') === guidWithoutBraces
+            );
+        }
+
+        function buildOUHierarchy() {
+            const ouMap = new Map();
+            const rootOUs = [];
+
+            // Create a map of all OUs
+            ouData.forEach(ou => {
+                const ouPath = `OU=${ou.Name},${ou.Parent}`;
+                ouMap.set(ouPath, {
+                    ...ou,
+                    fullPath: ouPath,
+                    children: [],
+                    gpos: []
+                });
+            });
+
+            // Build parent-child relationships
+            ouData.forEach(ou => {
+                const ouPath = `OU=${ou.Name},${ou.Parent}`;
+                const ouNode = ouMap.get(ouPath);
+
+                // Find children
+                ouData.forEach(potentialChild => {
+                    if (potentialChild.Parent === ouPath) {
+                        const childPath = `OU=${potentialChild.Name},${potentialChild.Parent}`;
+                        ouNode.children.push(ouMap.get(childPath));
+                    }
+                });
+
+                // Process linked GPOs
+                if (ou.LinkedGPO && ou.LinkedGPO.length > 0) {
+                    ou.LinkedGPO.forEach(gpoPath => {
+                        const guid = extractGuidFromPath(gpoPath);
+                        if (guid) {
+                            const gpo = findGPO(guid);
+                            if (gpo) {
+                                let wmiInfo = null;
+                                if (gpo.WmiFilter && gpo.WmiFilter.Path) {
+                                    const wmiGuid = extractGuidFromPath(gpo.WmiFilter.Path);
+                                    if (wmiGuid) {
+                                        wmiInfo = findWMI(wmiGuid);
+                                    }
+                                }
+                                ouNode.gpos.push({ gpo, wmiInfo });
+                            }
+                        }
+                    });
+                }
+
+                // Add to root if parent is domain root
+                if (ou.Parent.startsWith('DC=')) {
+                    rootOUs.push(ouNode);
+                }
+            });
+
+            return rootOUs;
+        }
+
+        function toggleOU(button, contentId) {
+            const content = document.getElementById(contentId);
+            if (content.classList.contains('visible')) {
+                content.classList.remove('visible');
+                button.classList.remove('expanded');
+                button.classList.add('collapsed');
+                button.textContent = '+';
+            } else {
+                content.classList.add('visible');
+                button.classList.remove('collapsed');
+                button.classList.add('expanded');
+                button.textContent = '−';
+            }
+        }
+
+        function renderOUNode(ou, level = 0) {
+            const hasChildren = ou.children.length > 0 || ou.gpos.length > 0;
+            const uniqueId = `ou_${Math.random().toString(36).substr(2, 9)}`;
+
+            let html = `<div class="ou-item" style="margin-left: ${level * 20}px;">`;
+            html += `<div class="ou-header">`;
+
+            if (hasChildren) {
+                html += `<button class="expand-btn collapsed" onclick="toggleOU(this, '${uniqueId}')">+</button>`;
+            } else {
+                html += `<button class="expand-btn" disabled></button>`;
+            }
+
+            html += `<span class="ou-name">${ou.Name}</span>`;
+
+            if (ou.gpos.length > 0) {
+                html += `<span class="gpo-count">(${ou.gpos.length} GPO${ou.gpos.length !== 1 ? 's' : ''})</span>`;
+            }
+
+            html += `</div>`;
+
+            if (hasChildren) {
+                html += `<div class="ou-children" id="${uniqueId}">`;
+
+                // Render GPOs first
+                ou.gpos.forEach(({ gpo, wmiInfo }) => {
+                    const hasWmi = wmiInfo !== null;
+                    html += `<div class="gpo-item">`;
+                    html += `<div class="gpo-name ${hasWmi ? 'has-wmi' : ''}">${gpo.DisplayName}</div>`;
+
+                    if (hasWmi) {
+                        html += `<div class="wmi-details">`;
+                        html += `<div><span class="wmi-name">WMI Filter:</span> ${wmiInfo['msWMI-Name']}</div>`;
+                        html += `<div class="wmi-query">${wmiInfo['msWMI-Parm2']}</div>`;
+                        html += `</div>`;
+                    }
+
+                    html += `</div>`;
+                });
+
+                // Then render child OUs
+                ou.children.forEach(child => {
+                    html += renderOUNode(child, 0);
+                });
+
+                html += `</div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function renderOUTree() {
+            const hierarchy = buildOUHierarchy();
+            const treeContainer = document.getElementById('ouTree');
+
+            let html = '';
+            hierarchy.forEach(ou => {
+                html += renderOUNode(ou);
+            });
+
+            treeContainer.innerHTML = html;
+            document.getElementById('treeContainer').classList.add('visible');
+        }
+    </script>
+</body>
+</html>

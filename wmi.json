@@ -1,0 +1,23 @@
+[
+    {
+        "DistinguishedName": "CN={32823fD9-C380-4182-1358-FD93608DFD3F},CN=SOM,CN=WMIPolicy,CN=System,DC=Contos,DC=COM",
+        "Name": "{32823fD9-C380-4182-1358-FD93608DFD3F}",
+        "ObjectClass": "msWMI-Som",
+        "ObjectGuid": "162e5a8f-f969-4feb-a2f6-9f7d180ae5f9",
+        "PropertyName": [
+            "DistinguishedName",
+            "smWMI-ID",
+            "msWMI-NamsWMI-Parm2me",
+            "Name",
+            "ObjectClass",
+            "ObjectGUID"
+        ],
+        "AddedProperties": [],
+        "RemovedProperties": [],
+        "ModifiedProperties": [],
+        "msWMI-ID": "{32823fD9-C380-4182-1358-FD93608DFD3F}",
+        "msWMI-Name": "Windows 10",
+        "msWMI-Parm2": "1;3;10;87;WQL;root\\CIMV2; Select * from Win32_OperatingSystem where Caption = \"Microsoft Windows 10\";",
+        "ObjectGUID": "162e5a8f-f969-4feb-a2f6-9f7d180ae5f9"
+    }
+]

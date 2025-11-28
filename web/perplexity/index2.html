@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoso GPO Viewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0078d4;
+            margin-bottom: 10px;
+        }
+        .welcome {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-left: 4px solid #0078d4;
+        }
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 4px;
+        }
+        .upload-form {
+            margin-bottom: 15px;
+        }
+        .upload-form label {
+            display: inline-block;
+            width: 200px;
+            font-weight: 600;
+        }
+        .upload-form input[type="file"] {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .tree-container {
+            margin-top: 20px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+        .ou-item {
+            margin: 5px 0;
+            line-height: 1.8;
+        }
+        .toggle-btn {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 18px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+        .toggle-btn.expanded {
+            background-color: #d32f2f;
+            color: white;
+            border-color: #d32f2f;
+        }
+        .toggle-btn.collapsed {
+            background-color: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        .ou-name {
+            font-weight: bold;
+            color: #0078d4;
+        }
+        .gpo-count {
+            color: #666;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+        .gpo-list {
+            margin-left: 40px;
+            margin-top: 5px;
+        }
+        .gpo-item {
+            padding: 5px 0;
+            color: #333;
+        }
+        .gpo-item.has-wmi {
+            font-style: italic;
+        }
+        .wmi-details {
+            margin-left: 20px;
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 2px;
+        }
+        .hidden {
+            display: none;
+        }
+        button {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #005a9e;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Contoso Group Policy Management Console</h1>
+        
+        <div class="welcome" id="welcomeMsg">
+            <h3>Welcome to the Contoso GPO Viewer</h3>
+            <p>This tool provides a fast, streamlined view of your Active Directory Group Policy infrastructure. Upload your OU, GPO, and WMI Filter JSON exports below to begin.</p>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <h3>Upload Data Files</h3>
+            <div class="upload-form">
+                <label for="ouFile">Organizational Units (OU):</label>
+                <input type="file" id="ouFile" accept=".json">
+            </div>
+            <div class="upload-form">
+                <label for="gpoFile">Group Policy Objects (GPO):</label>
+                <input type="file" id="gpoFile" accept=".json">
+            </div>
+            <div class="upload-form">
+                <label for="wmiFile">WMI Filters:</label>
+                <input type="file" id="wmiFile" accept=".json">
+            </div>
+            <button onclick="processFiles()">Load Data</button>
+            <div id="status"></div>
+        </div>
+
+        <div id="treeContainer" class="tree-container"></div>
+    </div>
+
+    <script>
+        let ouData = null;
+        let gpoData = null;
+        let wmiData = null;
+
+        async function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        resolve(data);
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                reader.onerror = (e) => reject(e);
+                reader.readAsText(file);
+            });
+        }
+
+        async function processFiles() {
+            const ouFile = document.getElementById('ouFile').files[0];
+            const gpoFile = document.getElementById('gpoFile').files[0];
+            const wmiFile = document.getElementById('wmiFile').files[0];
+            const status = document.getElementById('status');
+
+            if (!ouFile || !gpoFile || !wmiFile) {
+                status.className = 'status error';
+                status.textContent = 'Please select all three files.';
+                return;
+            }
+
+            try {
+                ouData = await readFile(ouFile);
+                gpoData = await readFile(gpoFile);
+                wmiData = await readFile(wmiFile);
+
+                status.className = 'status success';
+                status.textContent = 'Files loaded successfully! Building OU tree...';
+
+                setTimeout(() => {
+                    buildOUTree();
+                    document.getElementById('welcomeMsg').style.display = 'none';
+                }, 500);
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = 'Error loading files: ' + error.message;
+            }
+        }
+
+        function extractGuidFromCN(cnString) {
+            // Extract GUID from CN={GUID},...
+            const match = cnString.match(/CN=\{([^}]+)\}/i);
+            return match ? match[1].toLowerCase() : null;
+        }
+
+        function extractGuidFromWmiPath(pathString) {
+            // Extract GUID from MSFT_SomFilter.ID="{GUID}",...
+            const match = pathString.match(/ID="?\{([^}"]+)\}/i);
+            return match ? match[1].toLowerCase() : null;
+        }
+
+        function getGPOById(gpoId) {
+            return gpoData.find(gpo => gpo.Id.toLowerCase() === gpoId.toLowerCase());
+        }
+
+        function getWMIByGuid(wmiGuid) {
+            return wmiData.find(wmi => wmi['msWMI-ID'].replace(/[{}]/g, '').toLowerCase() === wmiGuid.toLowerCase());
+        }
+
+        function buildOUHierarchy() {
+            // Build a hierarchy map
+            const ouMap = {};
+            const rootOUs = [];
+
+            // First pass: create a map of all OUs
+            ouData.forEach(ou => {
+                const ouKey = `OU=${ou.Name},${ou.Parent}`;
+                ouMap[ouKey] = {
+                    ...ou,
+                    children: [],
+                    fullPath: ouKey
+                };
+            });
+
+            // Second pass: build parent-child relationships
+            ouData.forEach(ou => {
+                const ouKey = `OU=${ou.Name},${ou.Parent}`;
+                const currentOU = ouMap[ouKey];
+                
+                // Check if parent is a domain (DC=...)
+                if (ou.Parent.startsWith('DC=')) {
+                    rootOUs.push(currentOU);
+                } else {
+                    // Parent is an OU
+                    const parentOU = ouMap[ou.Parent];
+                    if (parentOU) {
+                        parentOU.children.push(currentOU);
+                    } else {
+                        // Parent not found in map, treat as root
+                        rootOUs.push(currentOU);
+                    }
+                }
+            });
+
+            return rootOUs;
+        }
+
+        function renderOU(ou, level = 0) {
+            const indent = level * 30;
+            const hasChildren = ou.children && ou.children.length > 0;
+            const ouId = 'ou_' + Math.random().toString(36).substr(2, 9);
+            
+            let html = `<div class="ou-item" style="margin-left: ${indent}px;">`;
+            
+            if (hasChildren) {
+                html += `<span class="toggle-btn collapsed" id="toggle_${ouId}" onclick="toggleOU('${ouId}')">+</span>`;
+            } else {
+                html += `<span style="display: inline-block; width: 20px; margin-right: 5px;"></span>`;
+            }
+            
+            html += `<span class="ou-name">${ou.Name}</span>`;
+            
+            // Count and display GPOs
+            const gpoCount = ou.LinkedGPO ? ou.LinkedGPO.length : 0;
+            html += `<span class="gpo-count">(${gpoCount} GPO${gpoCount !== 1 ? 's' : ''})</span>`;
+            
+            html += `</div>`;
+            
+            // Render GPOs if any
+            if (ou.LinkedGPO && ou.LinkedGPO.length > 0) {
+                html += `<div id="gpos_${ouId}" class="gpo-list hidden">`;
+                
+                ou.LinkedGPO.forEach(linkedGpoCN => {
+                    const gpoGuid = extractGuidFromCN(linkedGpoCN);
+                    const gpo = getGPOById(gpoGuid);
+                    
+                    if (gpo) {
+                        const hasWmi = gpo.WmiFilter !== null && gpo.WmiFilter !== undefined;
+                        const wmiClass = hasWmi ? 'has-wmi' : '';
+                        
+                        html += `<div class="gpo-item ${wmiClass}" style="margin-left: ${indent + 40}px;">`;
+                        html += `📋 ${gpo.DisplayName}`;
+                        html += `</div>`;
+                        
+                        // Render WMI filter details if present
+                        if (hasWmi && gpo.WmiFilter.Path) {
+                            const wmiGuid = extractGuidFromWmiPath(gpo.WmiFilter.Path);
+                            const wmiFilter = getWMIByGuid(wmiGuid);
+                            
+                            if (wmiFilter) {
+                                html += `<div class="wmi-details" style="margin-left: ${indent + 60}px;">`;
+                                html += `🔍 WMI: ${wmiFilter['msWMI-Name']}`;
+                                if (wmiFilter['msWMI-Parm2']) {
+                                    html += `<br><span style="margin-left: 20px; font-size: 0.9em;">${wmiFilter['msWMI-Parm2']}</span>`;
+                                }
+                                html += `</div>`;
+                            }
+                        }
+                    }
+                });
+                
+                html += `</div>`;
+            }
+            
+            // Render children
+            if (hasChildren) {
+                html += `<div id="children_${ouId}" class="hidden">`;
+                ou.children.forEach(childOU => {
+                    html += renderOU(childOU, level + 1);
+                });
+                html += `</div>`;
+            }
+            
+            return html;
+        }
+
+        function toggleOU(ouId) {
+            const toggle = document.getElementById('toggle_' + ouId);
+            const gpos = document.getElementById('gpos_' + ouId);
+            const children = document.getElementById('children_' + ouId);
+            
+            const isExpanded = toggle.classList.contains('expanded');
+            
+            if (isExpanded) {
+                toggle.classList.remove('expanded');
+                toggle.classList.add('collapsed');
+                toggle.textContent = '+';
+                if (gpos) gpos.classList.add('hidden');
+                if (children) children.classList.add('hidden');
+            } else {
+                toggle.classList.remove('collapsed');
+                toggle.classList.add('expanded');
+                toggle.textContent = '-';
+                if (gpos) gpos.classList.remove('hidden');
+                if (children) children.classList.remove('hidden');
+            }
+        }
+
+        function buildOUTree() {
+            const container = document.getElementById('treeContainer');
+            const hierarchy = buildOUHierarchy();
+            
+            let html = '<h3>Organizational Unit Hierarchy</h3>';
+            
+            hierarchy.forEach(rootOU => {
+                html += renderOU(rootOU);
+            });
+            
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

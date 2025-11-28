@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contoso GPO Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .upload { margin: 10px 0; }
+        .node { padding: 5px; }
+        .toggle { cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .green { color: green; }
+        .red { color: red; }
+        .ou-name { font-weight: bold; }
+        .gpo { margin: 5px 0; padding: 5px; border: 1px solid #ddd; border-radius: 3px; }
+        .wmi-info { font-size: 0.8em; color: #666; margin-top: 2px; }
+        .content { margin-left: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Contoso GPO Viewer</h1>
+    <div id="uploads">
+        <div class="upload"><label>OU JSON: <input type="file" id="ouUpload" accept=".json"></label></div>
+        <div class="upload"><label>GPO JSON: <input type="file" id="gpoUpload" accept=".json"></label></div>
+        <div class="upload"><label>WMI JSON: <input type="file" id="wmiUpload" accept=".json"></label></div>
+    </div>
+    <div id="tree"></div>
+
+    <script>
+        let ouJson, gpoJson, wmiJson;
+        let gpoMap = new Map();
+        let wmiMap = new Map();
+        let childrenMap = new Map();
+        let treeData = [];
+
+        document.getElementById('ouUpload').addEventListener('change', (e) => uploadFile('ou', e.target.files[0]));
+        document.getElementById('gpoUpload').addEventListener('change', (e) => uploadFile('gpo', e.target.files[0]));
+        document.getElementById('wmiUpload').addEventListener('change', (e) => uploadFile('wmi', e.target.files[0]));
+
+        function uploadFile(type, file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (type === 'ou') ouJson = data;
+                    else if (type === 'gpo') gpoJson = data;
+                    else if (type === 'wmi') wmiJson = data;
+                    if (ouJson && gpoJson && wmiJson) {
+                        buildData();
+                        render();
+                    }
+                } catch (err) {
+                    alert('Invalid JSON');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function getLinkedGpos(linkedPaths) {
+            return (linkedPaths || []).map(path => {
+                const match = path.match(/\{([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\}/);
+                if (!match) return null;
+                const guid = match[1];
+                const gpo = gpoMap.get(guid);
+                if (!gpo) return null;
+                let wmi = null;
+                if (gpo.WmiFilter && gpo.WmiFilter.Path) {
+                    const wmiMatch = gpo.WmiFilter.Path.match(/ID=\"\{([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\}\"/);
+                    if (wmiMatch) {
+                        wmi = wmiMap.get(wmiMatch[1]);
+                    }
+                }
+                return { ...gpo, wmi };
+            }).filter(Boolean);
+        }
+
+        function buildData() {
+            gpoMap = new Map(gpoJson.map(g => [g.Id, g]));
+            wmiMap = new Map(wmiJson.map(w => [w['msWMI-ID'].replace(/[{}]/g, ''), w]));
+            childrenMap.clear();
+            ouJson.forEach(ou => {
+                const parent = ou.Parent;
+                if (!childrenMap.has(parent)) childrenMap.set(parent, []);
+                childrenMap.get(parent).push(ou);
+                ou.linkedGpos = getLinkedGpos(ou.LinkedGPO);
+            });
+            const domainDN = ouJson.find(ou => !ou.Parent.includes('OU=')).Parent;
+            const topOus = childrenMap.get(domainDN) || [];
+            treeData = buildTree(topOus);
+        }
+
+        function buildTree(ous) {
+            return ous.map(ou => ({
+                name: ou.Name,
+                gpoCount: ou.linkedGpos.length,
+                linkedGpos: ou.linkedGpos,
+                children: buildTree(childrenMap.get(`OU=${ou.Name},${ou.Parent}`) || [])
+            }));
+        }
+
+        function renderGpo(gpo) {
+            const italic = gpo.WmiFilter ? 'font-style: italic;' : '';
+            let html = `<div class="gpo" style="${italic}"><span class="gpo-name">${gpo.DisplayName}</span>`;
+            if (gpo.WmiFilter && gpo.wmi) {
+                html += `<div class="wmi-info">${gpo.wmi['msWMI-Name']}: ${gpo.wmi['msWMI-Parm2']}</div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        function renderTree(node, level = 0, expanded = false) {
+            let html = `<div class="ou-container" style="margin-left: ${level * 20}px;">`;
+            html += `<div class="ou-header" onclick="toggle(this.parentElement)">`;
+            html += `<span class="toggle ${expanded ? 'red' : 'green'}">${expanded ? '-' : '+'}</span>`;
+            html += `<span class="ou-name">${node.name} (${node.gpoCount})</span>`;
+            html += '</div>';
+            html += `<div class="content" style="display: ${expanded ? 'block' : 'none'};">`;
+            html += node.linkedGpos.map(renderGpo).join('');
+            html += node.children.map(child => renderTree(child, level + 1, false)).join('');
+            html += '</div></div>';
+            return html;
+        }
+
+        function toggle(container) {
+            const content = container.querySelector('.content');
+            const toggleSpan = container.querySelector('.toggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggleSpan.textContent = '-';
+                toggleSpan.className = 'toggle red';
+            } else {
+                content.style.display = 'none';
+                toggleSpan.textContent = '+';
+                toggleSpan.className = 'toggle green';
+            }
+        }
+
+        function render() {
+            let html = treeData.map(node => renderTree(node, 0, false)).join('');
+            document.getElementById('tree').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+[
+    {
+        "Name": "Administration",
+        "Parent": "DC=Contoso,DC=com",
+        "LinkedGPO" :[
+            "CN={199806af-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com",
+            "CN={199806dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com"
+        ]
+    },
+    {
+        "Name": "Tier1",
+        "Parent": "OU=Administration,DC=Contoso,DC=com",
+        "LinkedGPO": [
+            "CN={199804dc-d108-4884-8cd2-de426310c85},CN=Policies,CN=System,DC=Contoso,DC=com"
+        ]
+    }
+]
